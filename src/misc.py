@@ -23,3 +23,13 @@ def getLineBetweenPoints(r0,c0,r1,c1):
     return (np.concatenate((np.floor(y), np.floor(y)+1)).astype(int), np.concatenate((x,x)).astype(int),
             np.concatenate((valbot, valtop)))
     
+
+def rotatePointAroundCenter(point,center,yaw):
+    if yaw < 0:
+        c,s = np.cos(yaw),np.sin(yaw)
+        rotMatrix = np.array([[c,-s],[s,c]])
+        return rotMatrix.dot(point-center)+center
+    else:
+        c,s = np.cos(yaw),np.sin(yaw)
+        rotMatrix = np.array([[c,s],[-s,c]])
+        return rotMatrix.dot(point-center)+center
