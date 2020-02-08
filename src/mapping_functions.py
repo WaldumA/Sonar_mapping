@@ -84,29 +84,14 @@ def imageGlobalMap(sonar_data,ekf_data,map,WALL_WIDTH,SCALE):
         current_angle+=angle_increment 
     
 
-    map[(positionManta[0]-20):(positionManta[0]),(positionManta[1]-10):(positionManta[1]+20)] = 0
+    map[(positionManta[0]-2):(positionManta[0]),(positionManta[1]-1):(positionManta[1]+2)] = 0
     #Visualising sonar image
     cv.namedWindow('MAP_DISPLAY',cv.WINDOW_NORMAL)
     cv.resizeWindow('MAP_DISPLAY', 1500,1500)
     cv.imshow("MAP_DISPLAY",map)
     cv.waitKey(1)
-    map[(positionManta[0]-20):(positionManta[0]),(positionManta[1]-10):(positionManta[1]+20)] = 0.8
+    map[(positionManta[0]-2):(positionManta[0]),(positionManta[1]-1):(positionManta[1]+2)] = 0.8
     return map
-
-
-    
-
-def publishCurrentScan():
-    pass
-
-def publishGlobalMap():
-    pass
-
-
-
-
-
-
 
     # See sonar FOV
     '''
