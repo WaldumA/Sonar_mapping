@@ -13,11 +13,11 @@ import mapping_functions
 ############ Global variables, into YAML file in the future ###############
 # Visialusation
 GLOBAL_MAP = True
-LOCAL_MAP = True
+LOCAL_MAP = False
 PUBLISH_GLOBAL_MAP = False
 PUBLISH_LOCAL_MAP = False
 WALL_WIDTH = 3
-SCALE = 100
+SCALE = 50
 ###########################################################################
 
 
@@ -66,7 +66,7 @@ class ROS_MAPPING:
         self.ekf_data = Odometry()
         self.map = np.ones((5000,5000),np.float32)
         rospy.Subscriber('manta/sonar',LaserScan,self.sonarCallback)
-        rospy.Subscriber('odometry/filtered',Odometry,self.ekfCallback)
+        rospy.Subscriber('/odometry/filtered',Odometry,self.ekfCallback)
         rospy.Timer(rospy.Duration(1.0/10.0),self.mappingCallback)
         
 
