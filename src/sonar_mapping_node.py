@@ -1,72 +1,92 @@
 #!/usr/bin/env python
-
 import rospy
 import cv2 as cv
 import numpy as np
 from std_msgs.msg import String
 from sensor_msgs.msg import LaserScan
+from nav_msgs.msg import Odometry
 import math
 import misc
+import mapping_functions
+import occupancy_gird_publisher
+from nav_msgs.msg import OccupancyGrid
 
-def createImageCurrentScan(data):
-    '''
-    max_range = 0
-    for range in data.ranges:
-        if range > max_range and range < 10000:
-            max_range = range
-    print(max_range)
-    '''
-
-    # Global variables, into YAML file in the future
-    WALL_WIDTH = 3
-    # Array containing current scan data
-    sonarDisplayArray = np.ones((1500,1000), np.float32)
-    positionManta = [1498,499]
-    angle_increment = data.angle_increment
-    current_angle = data.angle_min
-    while current_angle <= data.angle_min:
-        for index, range in enumerate(data.ranges):
-            if range < 10000:
-                # Projecting point from the sonar onto a 2D-plane given range and angle of current ping
-                scan_width = math.sin(current_angle)*range
-                scan_height = math.sqrt(pow(range,2) - pow(scan_width,2))
-                array_height = positionManta[0] - int(scan_height*100)
-                array_width = positionManta[1] - (scan_width*100)
-                
-
-                # Colors squares between surface and solid gray to represent area without obstacles and black to represent solid walls
-                rr, cc, val = misc.getLineBetweenPoints(array_height,array_width,positionManta[0],positionManta[1])
-                sonarDisplayArray[rr,cc] = 0.8
-                sonarDisplayArray[array_height-WALL_WIDTH:array_height+WALL_WIDTH,array_width-WALL_WIDTH:array_width+WALL_WIDTH] = 0
-                sonarDisplayArray[(positionManta[0]-20):(positionManta[0]),(positionManta[1]-10):(positionManta[1]+20)] = 0
-                #y_point, x_point = [positionManta[0],positionManta[1]]
-                #while (y_point > abs(positionManta[0]-scan_height)) and (x_point > abs(positionManta[1]-scan_width)):
-
-
-            # Each scan containts X-amount of pings with an increment in angle between the pings which have to be updated
-            current_angle+=angle_increment 
-    
-        #Visualising sonar image
-        cv.imshow("sonarDisplay",sonarDisplayArray)
-        cv.waitKey(1)
-           
-    
-
-    
-    
+############ Global variables, into YAML file in the future ###############
+# Visialusation
+GLOBAL_MAP = False
+LOCAL_MAP = True
+PUBLISH_GLOBAL_MAP =False 
+PUBLISH_LOCAL_MAP = False
+WALL_WIDTH = 3
+SCALE = 10 
+###########################################################################
 
 
 
-def sonarCallback(data):
-    createImageCurrentScan(data)
 
-def mapping():
-    rospy.init_node('sonar_mapping',anonymous=True)
-    rospy.Subscriber('manta/sonar',LaserScan,sonarCallback)
-    rospy.spin()
+class ROS_MAPPING:
 
+    #### Class attribtues - Constant variables - Read from YAML #####
+
+
+
+    #################################################################
+
+    #### Class handeling functions ##########################
+
+    def createImageGlobalMap(self):
+        mapping_functions.imageGlobalMap(self.sonar_data,self.ekf_data,self.map,WALL_WIDTH,SCALE)
+
+    def createImageCurrentScan(self):
+        mapping_functions.imageCurrentScan(self.sonar_data,WALL_WIDTH,SCALE)
+
+    def publishGlobalMap(self):
+        self.map, map_msg = occupancy_gird_publisher.publishGlobalMap(self.sonar_data,self.ekf_data,self.map,WALL_WIDTH,SCALE,self.map_msg)
+        self.pub.publish(self.map_msg)
+
+    def publishLocalMap(self):
+        pass
+        
+    def sonarCallback(self,data):
+        self.sonar_data = data
+  
+    def ekfCallback(self,data):
+        self.ekf_data = data
+
+    def mappingCallback(self,data): 
+        if GLOBAL_MAP == True:
+            self.createImageGlobalMap()
+        if LOCAL_MAP == True:
+            self.createImageCurrentScan()   
+        if PUBLISH_GLOBAL_MAP == True:
+            self.publishGlobalMap()
+        if PUBLISH_LOCAL_MAP == True:
+            self.publishLocalMap()
+
+    def __init__(self):
+         # If a map has to be published an msg must be initiated and a publisher has to be declared
+        if PUBLISH_GLOBAL_MAP == True:
+            self.map_msg = occupancy_gird_publisher.initiateMapMsg()
+            self.pub = rospy.Publisher('manta/global_map', OccupancyGrid, queue_size=10)
+        
+        if PUBLISH_LOCAL_MAP == True:
+            pass
+        
+        # Necesarry variables
+        self.sonar_data = LaserScan()
+        self.ekf_data = Odometry()
+        self.map = np.ones((500,500),np.float32)
+        
+        # Necesarry callback functions
+        rospy.Subscriber('manta/sonar',LaserScan,self.sonarCallback)
+        rospy.Subscriber('/odometry/filtered',Odometry,self.ekfCallback)
+        rospy.Timer(rospy.Duration(1.0/10.0),self.mappingCallback)
+        
+
+#### INIT of node ##################################
 if __name__ == '__main__':
-    mapping()
-
-
+    rospy.init_node('sonar_mapping',anonymous=True)
+    ROS_MAPPING()
+    rospy.spin()
+###################################################
 
