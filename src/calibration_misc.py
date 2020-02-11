@@ -1,7 +1,6 @@
 import rospy
 import numpy as np
 import cv2
-#from cv2 import cv
 from sensor_msgs.msg import LaserScan
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
@@ -37,6 +36,7 @@ def fit_line_least_squares(y,x):
         # Write fitted line parameters to file
         f = open('calibration.txt','w')
         f.write('a: ' + str(a) + '\nb: ' + str(b) + '\n')
+        f.close()
         return a,b
 
 # Converts a CompressedImage to an openCV image
@@ -183,15 +183,18 @@ def test_calibration(sonar_data,image_data,a,b,c,d,calibration):
 def curve_function(x,a,b,c):
     return pow(a*x,2) + b*x + c
 
-def linear_function(x,a,b):
-    return a*x + b
-
 # Fits a curve to points
 def fit_curve(x,y):
     [a,b,c],_ = curve_fit(curve_function,x,y)
+    f = open('calibration.txt','w')
+    f.write('a: ' + str(a) + '\nb: ' + str(b) + '\nc:' + str(c))
     return a,b,c
 
-
+# Fits 3d polynominal to points
 def fit_3deg(x,y):
-    return np.polyfit(x,y,3) 
+    a,b,c,d = np.polyfit(x,y,3) 
+    f = open('calibration.txt','w')
+    f.write('a: ' + str(a) + '\nb: ' + str(b) + '\nc:' + str(c) + '\nd:' + str(d))
+    f.close()
+    return a,b,c,d
     
