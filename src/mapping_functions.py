@@ -17,7 +17,7 @@ def imageCurrentScan(data,WALL_WIDTH,SCALE):
         current_angle = data.angle_min
         scan_ranges = data.ranges
         for index, range in enumerate(scan_ranges):
-            if range < 10:
+            if range < 44440:
                 # Projecting point from the sonar onto a 2D-plane given range and angle of current ping
                 scan_width = math.sin(current_angle)*range
                 scan_height = math.sqrt(pow(range,2) - pow(scan_width,2))
