@@ -13,12 +13,12 @@ from nav_msgs.msg import OccupancyGrid
 
 ############ Global variables, into YAML file in the future ###############
 # Visialusation
-GLOBAL_MAP = False
-LOCAL_MAP = True
-PUBLISH_GLOBAL_MAP =False 
+GLOBAL_MAP =False
+LOCAL_MAP = False 
+PUBLISH_GLOBAL_MAP = True
 PUBLISH_LOCAL_MAP = False
-WALL_WIDTH = 3
-SCALE = 10 
+WALL_WIDTH = 1
+SCALE = 5
 ###########################################################################
 
 
