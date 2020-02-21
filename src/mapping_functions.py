@@ -9,7 +9,7 @@ import misc
 
 
 
-def imageCurrentScan(data,WALL_WIDTH,SCALE):
+def imageCurrentScan(data,WALL_WIDTH,SCALE,test_object=False):
     # Array containing current scan data
         sonarDisplayArray = np.ones((1500,1000), np.float32)
         positionManta = [1498,499]
@@ -32,7 +32,12 @@ def imageCurrentScan(data,WALL_WIDTH,SCALE):
 
             # Each scan containts X-amount of pings with an increment in angle between the pings which have to be updated
             current_angle+=angle_increment 
-        
+        #if test_object != False:
+            new_height = positionManta[0] - test_object[0] 
+            new_width = positionManta[1] - test_object[1]
+            sonarDisplayArray[int(new_height-WALL_WIDTH):int(new_height+WALL_WIDTH),int(new_width-WALL_WIDTH):int(new_width+WALL_WIDTH)] = 0.4
+
+
         #Visualising sonar image
         cv.imshow("sonarDisplay",sonarDisplayArray)
         cv.waitKey(1)
