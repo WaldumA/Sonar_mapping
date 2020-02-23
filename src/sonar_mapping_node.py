@@ -10,35 +10,50 @@ import misc
 import mapping_functions
 import occupancy_gird_publisher
 from nav_msgs.msg import OccupancyGrid
+from vortex_msgs.msg import ObjectPlacement
 
 ############ Global variables, into YAML file in the future ###############
 # Visialusation
 GLOBAL_MAP = False
-LOCAL_MAP = False 
-PUBLISH_GLOBAL_MAP = True
+LOCAL_MAP = True
+PUBLISH_GLOBAL_MAP = False
 PUBLISH_LOCAL_MAP = False
 WALL_WIDTH = 1
-SCALE = 5
+SCALE = 40
 ###########################################################################
 
 
 
 
 class ROS_MAPPING:
+    # Constructor
+    def __init__(self):
+         # If a map has to be published an msg must be initiated and a publisher has to be declared
+        if PUBLISH_GLOBAL_MAP == True:
+            self.map_msg = occupancy_gird_publisher.initiateMapMsg()
+            self.pub = rospy.Publisher('manta/global_map', OccupancyGrid, queue_size=10)
+        
+        if PUBLISH_LOCAL_MAP == True:
+            pass
+        
+        # Necesarry variables
+        self.sonar_data = LaserScan()
+        self.ekf_data = Odometry()
+        self.object_position_data = ObjectPlacement()
+        self.map = np.ones((500,500),np.float32)
+        
+        # Necesarry callback functions
+        rospy.Subscriber('manta/sonar',LaserScan,self.sonarCallback)
+        rospy.Subscriber('/odometry/filtered',Odometry,self.ekfCallback)
+        rospy.Subscriber('/manta/object_position',ObjectPlacement,self.objectPositionCallback)
+        rospy.Timer(rospy.Duration(1.0/10.0),self.mappingCallback)
 
-    #### Class attribtues - Constant variables - Read from YAML #####
-
-
-
-    #################################################################
-
-    #### Class handeling functions ##########################
-
+    # Class functions
     def createImageGlobalMap(self):
-        mapping_functions.imageGlobalMap(self.sonar_data,self.ekf_data,self.map,WALL_WIDTH,SCALE)
+        mapping_functions.imageGlobalMap(self.sonar_data,self.ekf_data,self.map,WALL_WIDTH,SCALE, self.object_position_data)
 
     def createImageCurrentScan(self):
-        mapping_functions.imageCurrentScan(self.sonar_data,WALL_WIDTH,SCALE)
+        mapping_functions.imageCurrentScan(self.sonar_data,WALL_WIDTH,SCALE,self.object_position_data)
 
     def publishGlobalMap(self):
         self.map, map_msg = occupancy_gird_publisher.publishGlobalMap(self.sonar_data,self.ekf_data,self.map,WALL_WIDTH,SCALE,self.map_msg)
@@ -63,24 +78,11 @@ class ROS_MAPPING:
         if PUBLISH_LOCAL_MAP == True:
             self.publishLocalMap()
 
-    def __init__(self):
-         # If a map has to be published an msg must be initiated and a publisher has to be declared
-        if PUBLISH_GLOBAL_MAP == True:
-            self.map_msg = occupancy_gird_publisher.initiateMapMsg()
-            self.pub = rospy.Publisher('manta/global_map', OccupancyGrid, queue_size=10)
-        
-        if PUBLISH_LOCAL_MAP == True:
-            pass
-        
-        # Necesarry variables
-        self.sonar_data = LaserScan()
-        self.ekf_data = Odometry()
-        self.map = np.ones((500,500),np.float32)
-        
-        # Necesarry callback functions
-        rospy.Subscriber('manta/sonar',LaserScan,self.sonarCallback)
-        rospy.Subscriber('/odometry/filtered',Odometry,self.ekfCallback)
-        rospy.Timer(rospy.Duration(1.0/10.0),self.mappingCallback)
+    def objectPositionCallback(self,data):
+        self.object_position_data = data
+  
+
+
         
 
 #### INIT of node ##################################
@@ -88,5 +90,5 @@ if __name__ == '__main__':
     rospy.init_node('sonar_mapping',anonymous=True)
     ROS_MAPPING()
     rospy.spin()
-###################################################
+####################################################
 
