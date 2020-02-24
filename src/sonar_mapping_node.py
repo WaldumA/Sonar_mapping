@@ -15,11 +15,11 @@ from vortex_msgs.msg import ObjectPlacement
 ############ Global variables, into YAML file in the future ###############
 # Visialusation
 GLOBAL_MAP = False
-LOCAL_MAP = True
-PUBLISH_GLOBAL_MAP = False
+LOCAL_MAP = False
+PUBLISH_GLOBAL_MAP = True
 PUBLISH_LOCAL_MAP = False
 WALL_WIDTH = 1
-SCALE = 40
+SCALE = 10
 ###########################################################################
 
 
@@ -41,6 +41,12 @@ class ROS_MAPPING:
         self.ekf_data = Odometry()
         self.object_position_data = ObjectPlacement()
         self.map = np.ones((500,500),np.float32)
+
+        # Global map
+        self.map_pub = np.empty((500,500), np.float)
+        self.map_pub.fill(-0.01)
+        
+
         
         # Necesarry callback functions
         rospy.Subscriber('manta/sonar',LaserScan,self.sonarCallback)
@@ -56,7 +62,7 @@ class ROS_MAPPING:
         mapping_functions.imageCurrentScan(self.sonar_data,WALL_WIDTH,SCALE,self.object_position_data)
 
     def publishGlobalMap(self):
-        self.map, map_msg = occupancy_gird_publisher.publishGlobalMap(self.sonar_data,self.ekf_data,self.map,WALL_WIDTH,SCALE,self.map_msg)
+        self.map_pub, map_msg = occupancy_gird_publisher.publishGlobalMap(self.sonar_data,self.ekf_data,self.map_pub,WALL_WIDTH,SCALE,self.map_msg)
         self.pub.publish(self.map_msg)
 
     def publishLocalMap(self):

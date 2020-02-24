@@ -141,7 +141,7 @@ def get_pixel_width(image):
             bbox = cv2.boundingRect(contour)
        
     if bbox != -1:
-        pixel_width = int((bbox[0]+bbox[2])/2)#bbox[0] + int((bbox[0]+bbox[2])/2)
+        pixel_width = (bbox[0] + int(bbox[0]+bbox[2]))/2
         ''' 
         # Visualising bounding box for troubleshooting purposes
         cv2.rectangle(image,(bbox[0],bbox[1]),(bbox[0]+bbox[2],bbox[1]+bbox[3]),(0,255,0), 3)  
@@ -177,7 +177,6 @@ def test_calibration(sonar_data,image_data,a,b,c,d,calibration):
         print(current_bearing)
     elif calibration == 3:
         current_bearing = math.pow(float(pixel_width),3)*a + math.pow(float(pixel_width),2)*b + float(pixel_width)*c + d
-        print(pixel_width)
         print(current_bearing)
 
 # Curve function
